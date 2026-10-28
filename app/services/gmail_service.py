@@ -5,6 +5,8 @@ from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 
+import base64
+
 
 # Allow the application to read Gmail messages.
 SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
@@ -64,6 +66,38 @@ def get_gmail_service():
 
     return service
 
+def get_email_body(payload):
+    """Extract readable text from a Gmail message payload."""
+
+    mime_type = payload.get("mimeType", "")
+    body_data = payload.get("body", {}).get("data")
+
+    if mime_type == "text/plain" and body_data:
+        decoded = base64.urlsafe_b64decode(body_data)
+        return decoded.decode("utf-8", errors="replace")
+
+    parts = payload.get("parts", [])
+
+    # Prefer plain text when the email is multipart.
+    for part in parts:
+        if part.get("mimeType") == "text/plain":
+            text = get_email_body(part)
+            if text:
+                return text
+
+    # Handle nested multipart messages.
+    for part in parts:
+        if part.get("mimeType", "").startswith("multipart/"):
+            text = get_email_body(part)
+            if text:
+                return text
+
+    # Fall back to HTML if no plain-text body is available.
+    if mime_type == "text/html" and body_data:
+        decoded = base64.urlsafe_b64decode(body_data)
+        return decoded.decode("utf-8", errors="replace")
+
+    return ""
 
 def get_recent_emails(limit=10):
     """Return basic information about the most recent Gmail messages."""
@@ -92,8 +126,7 @@ def get_recent_emails(limit=10):
             .get(
                 userId="me",
                 id=message["id"],
-                format="metadata",
-                metadataHeaders=["Subject", "From", "Date"],
+                format="full"
             )
             .execute()
         )
@@ -119,6 +152,7 @@ def get_recent_emails(limit=10):
                     "date", "Unknown date"
                 ),
                 "snippet": email.get("snippet", ""),
+                "body": get_email_body(email.get("payload", {}))
             }
         )
 

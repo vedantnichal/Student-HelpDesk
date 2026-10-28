@@ -68,20 +68,4 @@ def analyze_mail(mail: str)->mail_eval:
         print(f"Gemini Error: {e}")
         return None
 
-
-sample="""
-Subject: Data Structures Assignment 3
-
-Dear Students,
-
-Assignment 3 for Data Structures is now available.
-Submit your solution through the college portal by
-November 5, 2026.
-
-Late submissions may not be accepted.
-
-Regards,
-Course Instructor
-"""
-response= analyze_mail(sample)
-print(response)
+        
