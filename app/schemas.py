@@ -23,6 +23,14 @@ class mail_eval(BaseModel):
         description="Explicit submission or action deadline in strict 'YYYY-MM-DD' ISO format. If no explicit deadline, set to null.",
         default=None
     )
+    event_date: str | None=Field(
+        description="Explicit event date in strict 'YYYY-MM-DD' ISO format. If no explicit deadline, set to null.",
+        default=None
+    )
+    location: str | None=Field(
+        description="Location of the event. If no explicit deadline, set to null.",
+        default=None
+    )
     confidence_score: float = Field(
         description= "Confidence in overall analysis between 0 to 1",
         ge=0.0,
